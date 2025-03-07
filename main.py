@@ -1,11 +1,12 @@
-from assembler import assemble
+from assembler import assemble, preassemble
 from schematic import create_rom
 
 
 if __name__ == '__main__':
     assemble("main.as", "output.bin")
     debug_symbols = None
-    with open("main.as", "r") as r:
+    preassemble("main.as", "output.asx")
+    with open("output.asx", "r") as r:
         debug_symbols = r.readlines()
     with open("output.bin") as f:
         lines = f.readlines()

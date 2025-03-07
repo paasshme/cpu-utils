@@ -3,7 +3,7 @@ operations_dict = {
     "ADD": "0001",
     "SUB": "0010",
     "XOR": "0011",
-    "NOR": "0100",
+    "LB": "0100",
     "XNOR": "0101",
     "AND": "0110",
     "NAND": "0111",
@@ -17,13 +17,14 @@ operations_dict = {
     "BRNC": "110000",
     "CALL": "1101",
     "RET": "1110",
-    "WD": "1111"
+    "ST": "1111"
 }
 
 debug_info = False
-three_operands = ["ADD", "SUB", "XOR", "NOR", "XNOR", "AND", "NAND"]
+three_operands = ["ADD", "SUB", "XOR", "XNOR", "AND", "NAND"]
 immediate =  ["LDI", "ADI"]
 jumps = ["CALL", "RET",  "JMP", "BRZ", "BRNZ", "BRC", "BRNC"]
+memy = ["ST", "LB"]
 
 def translate_labels(datas):
     labels = {}
@@ -86,6 +87,13 @@ def handle_jumps(operation, address: None) -> str:
         target = format(int(address), '04b')
         # 6 bits as operation include 2 opcodes bits
         res += f"000000{target}"
+    return res
+
+def handle_memy(operation, address_reg, data_reg, offset):
+    res = f"{operations_dict[operation]}"
+    if operation in ["ST", "LB"]:
+        
+        res += f"{format(int(address_reg[1:]), '04b')}{format(int(data_reg[1:]), '04b')}{format(int(offset), '04b')}"
     return res
 
 def preassemble(input_file, dest):
@@ -155,6 +163,8 @@ def assemble(input_file, dest):
             assembled.append(handle_jumps(d[0], d[1] if len(d) > 1 else None))
         elif operation == "HALT":
             assembled.append(f"{operations_dict['HALT']}{'0'*12}")
+        elif operation in memy:
+            assembled.append(handle_memy(d[0], d[1], d[2], d[3]))
         else:
             print("unknown op ", d[0])
             assembled.append(handle_others(d[0]))

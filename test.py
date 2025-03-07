@@ -5,7 +5,8 @@ import sys
 # Assuming the assembler code is in a file named `assembler.py`
 from assembler import (
     handle_3_operands, handle_immediate, handle_jumps, handle_others,
-    translate_labels, check_instruction_limit, preassemble, assemble
+    translate_labels, check_instruction_limit, preassemble, assemble,
+    handle_memy
 )
 
 TEST_FOLDER="test_files"
@@ -39,6 +40,12 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(handle_jumps("BRC", 4), "1100100000000100")
         self.assertEqual(handle_jumps("CALL", 7), "1101000000000111")
         self.assertEqual(handle_jumps("RET", None), "1110000000000000")
+
+    def test_handle_memy(self):
+        self.assertEqual(handle_memy("ST", "r1","r2","3"), "1111000100100011")
+        self.assertEqual(handle_memy("ST", "r4","r2","3"), "1111010000100011")
+        self.assertEqual(handle_memy("LB", "r4","r2","3"), "0100010000100011")
+        self.assertEqual(handle_memy("LB", "r1","r2","3"), "0100000100100011")
 
     def test_translate_labels(self):
         datas = [".label1:\n", "ADD r1 r2 r3\n", "JMP label1\n", "BRZ label1\n"]
