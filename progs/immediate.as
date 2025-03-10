@@ -1,0 +1,7 @@
+LDI r1 0
+LDI r2 2
+LDI r3 3
+LDI r4 4
+ADI r4 63
+ADI r2 2
+ADI r1 255

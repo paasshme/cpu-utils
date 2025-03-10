@@ -26,8 +26,6 @@ immediate =  ["LDI", "ADI"]
 jumps = ["CALL", "RET",  "JMP", "BRZ", "BRNZ", "BRC", "BRNC"]
 memy = ["ST", "LB"]
 
-MAX_INSTRUCTIONS = 256
-
 def translate_labels(datas):
     labels = {}
     address_counter = 0
@@ -47,8 +45,8 @@ def translate_labels(datas):
 def check_instruction_limit(datas):
     instructions = [data for data in datas if not (data.strip().startswith("#") or data.strip().startswith("//") or data.strip() == "")]
 
-    if len(instructions) > MAX_INSTRUCTIONS:
-        print(f"Error, too much instructions maximum is {MAX_INSTRUCTIONS}")
+    if len(instructions) > 16:
+        print("Error, too much instructions")
         return False
     return True
 
@@ -79,16 +77,16 @@ def handle_others(operation) -> str:
 def handle_jumps(operation, address: None) -> str:
     res = f"{operations_dict[operation]}"
     if operation == "CALL":
-        res = f"{res}{'0'*4}{format(int(address), '08b')}"
+        res = f"{res}{'0'*8}{format(int(address), '04b')}"
     elif operation == "RET":
         res= f"{res}{'0'*12}"
     elif operation == "JMP":
-        target = format(int(address), '08b')
-        res += f"0000{target}"
+        target = format(int(address), '04b')
+        res += f"00000000{target}"
     elif operation.startswith("BR"): 
-        target = format(int(address), '08b')
+        target = format(int(address), '04b')
         # 6 bits as operation include 2 opcodes bits
-        res += f"00{target}"
+        res += f"000000{target}"
     return res
 
 def handle_memy(operation, address_reg, data_reg, offset):
@@ -181,15 +179,6 @@ def assemble(input_file, dest):
             print("add halt")
             f.write(f"{operations_dict['HALT']}000000000000\n")
 
-
-def format_bin(output_file, dest):
-    bin_data = []
-    with open(output_file, 'r') as f:
-        bin_data = f.readlines()
-    
-    with open(dest, "w") as f:
-        for l in bin_data:
-            f.write(f"{l[:4]} {l[4:8]} {l[8:12]} {l[12:16]}\n")
 
 if __name__ == '__main__':
     assemble("main.as", "output.bin")

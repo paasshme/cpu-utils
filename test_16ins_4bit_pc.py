@@ -3,7 +3,7 @@ from io import StringIO
 import sys
 
 # Assuming the assembler code is in a file named `assembler.py`
-from assembler import (
+from assembler_16_ins_4_bit_pc import (
     handle_3_operands, handle_immediate, handle_jumps, handle_others,
     translate_labels, check_instruction_limit, preassemble, assemble,
     handle_memy
@@ -33,7 +33,7 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(handle_immediate("ADI", ["r2", "255"]), "1010001011111111")
 
     def test_handle_jumps(self):
-        self.assertEqual(handle_jumps("JMP", 200), "1011000011001000")
+        self.assertEqual(handle_jumps("JMP", 5), "1011000000000101")
         self.assertEqual(handle_jumps("BRZ", 1), "1100010000000001")
         self.assertEqual(handle_jumps("BRNZ", 2), "1100110000000010")
         self.assertEqual(handle_jumps("BRNC", 3), "1100000000000011")
@@ -53,9 +53,9 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(labels, {".label1": 0})
 
     def test_check_instruction_limit(self):
-        datas = ["# Comment\n", "ADD r1 r2 r3\n"] * 200
+        datas = ["# Comment\n", "ADD r1 r2 r3\n"] * 10
         self.assertTrue(check_instruction_limit(datas))
-        datas = ["ADD r1 r2 r3\n"] * 257
+        datas = ["ADD r1 r2 r3\n"] * 17
         self.assertFalse(check_instruction_limit(datas))
 
     def test_preassemble(self):
