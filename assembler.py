@@ -192,5 +192,5 @@ def format_bin(output_file, dest):
             f.write(f"{l[:4]} {l[4:8]} {l[8:12]} {l[12:16]}\n")
 
 if __name__ == '__main__':
-    assemble("main.as", "output.bin")
-    preassemble("main.as", "output.asx")
+    assemble("main.as", "build/output.bin")
+    preassemble("main.as", "build/output.asx")

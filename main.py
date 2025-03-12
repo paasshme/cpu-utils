@@ -12,13 +12,13 @@ if __name__ == '__main__':
             exit(1)
 
     print(f"Assembling {asm_file}")
-    assemble(asm_file, "output.bin")
+    assemble(asm_file, "build/output.bin")
     debug_symbols = None
-    preassemble(asm_file, "output.asx")
-    with open("output.asx", "r") as r:
+    preassemble(asm_file, "build/output.asx")
+    with open("build/output.asx", "r") as r:
         debug_symbols = r.readlines()
-    with open("output.bin") as f:
+    with open("build/output.bin") as f:
         lines = f.readlines()
         create_rom(lines, debug_symbols)
 
-    format_bin("output.bin", "output_formatted.txt")
+    format_bin("build/output.bin", "build/output_formatted.txt")

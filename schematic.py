@@ -1,6 +1,8 @@
 import mcschematic
 
 save_folder = r"C:\Users\jacqu\AppData\Roaming\.minecraft\config\worldedit\schematics"
+schem_name = "prog"
+
 
 def get_element_with_fallback(arr, index, fallback):
     return arr[index] if index < len(arr) else fallback
@@ -9,7 +11,6 @@ def full_one(x,y,z, repeater_direction, schem):
     create_instruction([1]*16, x,y,z, repeater_direction, schem)
 
 def create_instruction(line, x,y,z, repeater_direction, schem):
-    print(line, x, y, z)
     byte1 = line[:8]
     byte2 = line[8:16]
     for i, char in enumerate(byte1):
@@ -87,10 +88,10 @@ def create_rom(lines, debug_symbols = None):
 
         block_offset = (-9 * (block_to_use // 2) )
         offset_x = block_offset -1 if position_in_block > 15 else block_offset + 1
-        create_instruction(line, offset_x, y_offset, offset_z)
-        print(f"{i} Register block: {block_to_use}, position {position_in_block} block offset {block_offset} X {offset_x} Z {offset_z}")
+        repeater_direction = "west" if position_in_block > 15 else "east"
+        create_instruction(line, offset_x, y_offset, offset_z, repeater_direction, schem)
 
-        # full_one(offset_x, y_offset, offset_z,  "west" if position_in_block > 15 else "east", schem)
+        # full_one(offset_x, y_offset, offset_z,  , schem)
         # create_instruction(line, offset_x, y_offset, offset_z,  "west" if position_in_block > 15 else "east", schem)
         # schem.setBlock((offset_x, y_offset, offset_z), "minecraft:redstone_lamp",)
         # schem.setBlock((offset_x, y_offset+1, offset_z), f"minecraft:repeater[facing={]")
@@ -125,11 +126,9 @@ def create_rom(lines, debug_symbols = None):
 
         # y_offset = 0
         # x_offset -= 2
-
-
-    schem.save(save_folder, "test", mcschematic.Version.JE_1_20_1)
-    print("Schema saved as 'prog' !")
+    schem.save(save_folder, schem_name, mcschematic.Version.JE_1_20_1)
+    print(f"Schema saved as {schem_name} !")
 if __name__ == '__main__':
-    with open("output.bin") as f:
+    with open("build/output.bin") as f:
         lines = f.readlines()
         create_rom(lines)
