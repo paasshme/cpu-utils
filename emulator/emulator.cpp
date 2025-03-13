@@ -11,15 +11,14 @@ void logRegisterChange(unsigned int regIndex, unsigned int prevValue,
 }
 
 void logMemoryChange(unsigned int address, unsigned int prevValue,
-  unsigned int newValue) {
-std::cout << "RAM #" << address << " [" << prevValue << "] -> ["
-<< newValue << "]" << std::endl;
+                     unsigned int newValue) {
+  std::cout << "RAM #" << address << " [" << prevValue << "] -> [" << newValue
+            << "]" << std::endl;
 }
 
 #endif
-CPUState::CPUState() : programCounter(0), callStackTop(-1) {}
 
-CPUState::CPUState(std::array<unsigned char, 512> instructions)
+CPUState::CPUState(std::array<unsigned short, 512> instructions)
     : programCounter(0), instructions(instructions), callStackTop(-1) {}
 
 bool CPUState::isCallStackEmpty() const { return callStackTop == -1; }
@@ -42,20 +41,20 @@ unsigned char CPUState::readRegister(unsigned char index) {
 }
 
 unsigned char CPUState::readMemory(unsigned char index, unsigned char offset) {
-  if (index+offset < 256 && index+offset >= 0)
+  if (index + offset < 256 && index + offset >= 0)
     return memory[index + offset];
   return 0;
 }
 
-void CPUState::writeMemory(unsigned char address, unsigned char offset, unsigned char value) {
-  if (address+offset < 256 && address+offset >= 0) {
+void CPUState::writeMemory(unsigned char address, unsigned char offset,
+                           unsigned char value) {
+  if (address + offset < 256 && address + offset >= 0) {
 #ifdef EMU_DATA_DEBUG
-  logMemoryChange(address + offset, memory[address + offset], value);
+    logMemoryChange(address + offset, memory[address + offset], value);
 #endif
     memory[address + offset] = value;
   }
 }
-
 
 void CPUState::push(unsigned char value) {
   callStack[(++callStackTop) % 8] = value;
@@ -107,109 +106,118 @@ void CPUState::displayState() const {
   }
   std::cout << "]" << std::endl;
 }
-
 // Implementation of the execute function
-void execute(unsigned short instruction, CPUState &cpu) {
-  unsigned opcode = static_cast<Opcode>(instruction >> 12);
+Opcode CPUState::execute() {
+  unsigned short instruction = instructions[programCounter];
+
+  Opcode opcode = static_cast<Opcode>(instruction >> 12);
+  std::cout << "Executing " << instruction << " at PC " << (int)programCounter
+            << std::endl;
+  std::cout << "opcode=" << opcode << std::endl;
   unsigned operand_1 = (instruction >> 8) & 0xF;
   unsigned operand_2 = (instruction >> 4) & 0xF;
   unsigned operand_3 = instruction & 0xF;
   unsigned immediate = instruction & 0xFF;
-  unsigned branch_flags = (instruction >> 8) & 0x3;
+  unsigned branch_flags = (instruction >> 10) & 0x3;
 
   char res;
   bool jump;
   // std::cout << opcode << "op " << operand_1 << ":" << operand_2 << ": "
-            // << operand_3 << ": " << immediate << std::endl;
+  // << operand_3 << ": " << immediate << std::endl;
   switch (opcode) {
   case NOP:
-    cpu.programCounter++;
+    programCounter++;
     break;
   case ADD:
-    res = cpu.readRegister(operand_1) + cpu.readRegister(operand_2);
-    cpu.writeRegister(operand_3, res);
+    res = readRegister(operand_1) + readRegister(operand_2);
+    writeRegister(operand_3, res);
     if (res == 0)
-      cpu.zeroFlag = true;
-    cpu.programCounter++;
+      zeroFlag = true;
+    carryFlag = readRegister(operand_1) > 255 - readRegister(operand_2);
+
+    programCounter++;
     break;
   case SUB:
-    res = cpu.readRegister(operand_1) - cpu.readRegister(operand_2);
-    cpu.writeRegister(operand_3, res);
+    res = readRegister(operand_1) - readRegister(operand_2);
+    writeRegister(operand_3, res);
     if (res == 0)
-      cpu.zeroFlag = true;
-    cpu.programCounter++;
+      zeroFlag = true;
+      carryFlag = readRegister(operand_2) > readRegister(operand_1);
+
+    programCounter++;
     break;
   case XOR:
-    res = cpu.readRegister(operand_1) ^ cpu.readRegister(operand_2);
-    cpu.writeRegister(operand_3, res);
-    cpu.programCounter++;
+    res = readRegister(operand_1) ^ readRegister(operand_2);
+    writeRegister(operand_3, res);
+    programCounter++;
     break;
   case LB:
-    cpu.writeRegister(operand_3, cpu.readMemory(operand_1,operand_3));
-    cpu.programCounter++;
+    writeRegister(operand_3, readMemory(operand_1, operand_3));
+    programCounter++;
     break;
   case XNOR:
-    res = !(cpu.readRegister(operand_1) ^ cpu.readRegister(operand_2));
-    cpu.writeRegister(operand_3, res);
-    cpu.programCounter++;
+    res = !(readRegister(operand_1) ^ readRegister(operand_2));
+    writeRegister(operand_3, res);
+    programCounter++;
     break;
   case AND:
-    res = cpu.readRegister(operand_1) & cpu.readRegister(operand_2);
-    cpu.writeRegister(operand_3, res);
-    cpu.programCounter++;
+    res = readRegister(operand_1) & readRegister(operand_2);
+    writeRegister(operand_3, res);
+    programCounter++;
     break;
   case NAND:
-    res = !(cpu.readRegister(operand_1) & cpu.readRegister(operand_2));
-    cpu.writeRegister(operand_3, res);
-    cpu.programCounter++;
+    res = !(readRegister(operand_1) & readRegister(operand_2));
+    writeRegister(operand_3, res);
+    programCounter++;
     break;
   case LDI:
-    cpu.writeRegister(operand_1, immediate);
-    cpu.programCounter++;
+    writeRegister(operand_1, immediate);
+    programCounter++;
     break;
   case HALT:
     std::cout << "HALT instruction executed. Program terminated." << std::endl;
-    cpu.programCounter = -1;
     break;
   case ADI:
-    res = cpu.readRegister(operand_1);
+    res = readRegister(operand_1);
     res += immediate;
-    cpu.writeRegister(operand_1, res);
+    writeRegister(operand_1, res);
     if (res == 0)
-      cpu.zeroFlag = true;
-    cpu.programCounter++;
+      zeroFlag = true;
+    programCounter++;
     break;
   case JMP:
-    cpu.programCounter = immediate;
+    programCounter = immediate;
     break;
   case BRANCH:
-    jump = (branch_flags == 0 && !cpu.carryFlag) ||
-           (branch_flags == 1 && cpu.zeroFlag) ||
-           (branch_flags == 2 && cpu.carryFlag) ||
-           (branch_flags == 3 && !cpu.zeroFlag);
+    std::cout << "Branch flag=" << branch_flags << std::endl;
+    jump = (branch_flags == 0 && !carryFlag) ||
+           (branch_flags == 1 && zeroFlag) ||
+           (branch_flags == 2 && carryFlag) || (branch_flags == 3 && !zeroFlag);
     if (jump) {
-      cpu.programCounter = immediate;
+      programCounter = immediate;
     } else {
-      cpu.programCounter++;
+      programCounter++;
     }
     break;
   case CALL:
-    cpu.push(cpu.programCounter + 1);
-    cpu.programCounter = immediate;
+    push(programCounter + 1);
+    programCounter = immediate;
     break;
   case RET:
-    cpu.programCounter = cpu.pop();
+    programCounter = pop();
     break;
   case ST:
-    res = cpu.readRegister(operand_2);
-    cpu.writeMemory(operand_1, operand_3, res);
-    cpu.programCounter++;
+    res = readRegister(operand_2);
+    writeMemory(operand_1, operand_3, res);
+    programCounter++;
     break;
   default:
     std::cerr << "Error: Unknown opcode!" << std::endl;
-    cpu.programCounter = -1;
+    return HALT;
     break;
   }
+
+  return opcode;
 }
 
 // Main function to test the CPUState and execute functions

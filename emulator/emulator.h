@@ -1,10 +1,11 @@
 #pragma once
 
+#include <array>
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <stack>
-#include <array>
+
 
 enum Opcode {
   NOP,
@@ -27,10 +28,10 @@ enum Opcode {
 
 class CPUState {
 private:
-  std::array<unsigned char, 512> instructions;
+std::array<unsigned short, 512> instructions;
   std::array<unsigned char, 8> registers{0};
-  std::array<unsigned char, 8> callStack;
-  std::array<unsigned char, 256> memory;
+  std::array<unsigned char, 8> callStack{0};
+  std::array<unsigned char, 256> memory{0};
   int callStackTop;
 
   bool isCallStackEmpty() const;
@@ -41,17 +42,17 @@ public:
   bool carryFlag;
   bool zeroFlag;
 
-  CPUState();
-  CPUState(std::array<unsigned char, 512> instructions);
+  CPUState(std::array<unsigned short, 512> instructions);
 
   void writeRegister(unsigned char index, unsigned char value);
   unsigned char readRegister(unsigned char index);
 
-  void writeMemory(unsigned char address, unsigned char offset, unsigned char value);
+  void writeMemory(unsigned char address, unsigned char offset,
+                   unsigned char value);
   unsigned char readMemory(unsigned char index, unsigned char offset);
   void push(unsigned char value);
   char pop();
   void displayState() const;
+  Opcode execute();
 };
 
-void execute(unsigned short instruction, CPUState &cpu);
